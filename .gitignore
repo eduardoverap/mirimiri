@@ -1,0 +1,6 @@
+# Composer dependencies
+/vendor/
+
+# Storage and database files
+/storage/*
+/database/*
