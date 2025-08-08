@@ -2,8 +2,6 @@
 
 Mirimiri is an MVC application based on JavaScript and PHP. It allows users to extract kanjis from a text, view these on a table, and import data from the KANJIDIC XML database (not included here).
 
-> This is an alpha version. Future updates and additional features are in development.
-
 ---
 
 ## Installation
@@ -39,13 +37,9 @@ Mirimiri is an MVC application based on JavaScript and PHP. It allows users to e
 
    To get the kanji information, you need to import the KANJIDIC database. Download it from the [EDRDG wiki](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project). Uncompress the TAR.GZ and put the XML in the /database/ folder. Then go to "My database" in the application and proceed with the import.
 
----
-
 ## Project Status
 
 This is an early alpha version. Some core functionality is implemented, but additional improvements and features are planned.
-
----
 
 ## License
 

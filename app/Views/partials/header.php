@@ -19,12 +19,13 @@
   <script src="src/modal.js" defer></script>
 </head>
 <body>
-  <header>
-    <h1>Mirimiri Kanji CRUD</h1>
-    <nav>
-      <ul>
-        <li><a href="<?= url(); ?>">Home</a></li>
-        <li><a href="<?= url('admin'); ?>">My database</a></li>
-      </ul>
-    </nav>
+  <header class="title-header">
+    <div class="page-title">Mirimiri Kanji CRUD</div>
   </header>
+  <main class="main-container">
+    <aside class="list-aside">
+      <div>
+        <a class="list-btn" title="Extract kanjis from text" href="<?= url() ?>">Kanji detector</a>
+        <a class="list-btn" title="Manage your kanji database" href="<?= url('admin') ?>">Kanji database</a>
+      </div>
+    </aside>

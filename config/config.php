@@ -4,15 +4,14 @@ mb_internal_encoding('UTF-8');
 mb_http_output('UTF-8');
 mb_regex_encoding('UTF-8');
 
-// Timezone
-date_default_timezone_set('America/Lima');
-
 // App paths
 define('APP_ROOT', __DIR__ . '/..');
 define('BASE_URL', str_replace('public/index.php', '', $_SERVER['PHP_SELF']));
 define('DB_PATH', APP_ROOT . '/database/app.db');
+define('CORPUS_DB_PATH', APP_ROOT . '/database/corpus.db');
 define('DB_CONN', APP_ROOT . '/config/database.php');
 define('KD2_PATH', APP_ROOT . '/database/kanjidic2.xml');
+define('SETTINGS_PATH', APP_ROOT . '/storage/settings.json');
 define('JOURNAL_LOG', APP_ROOT . '/storage/journal.log');
 
 // Level constants
@@ -27,3 +26,7 @@ define('HAN_REGEX', '/\p{Han}/u');
 
 // Web components
 define('BTN_ACTIONS', '<input type="button" class="btn-edit" value="Edit" />');
+
+// Set timezone
+$tz = json_decode(file_get_contents(SETTINGS_PATH))->timezone;
+date_default_timezone_set($tz);

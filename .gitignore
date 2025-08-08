@@ -4,3 +4,7 @@
 # Storage and database files
 /storage/*
 /database/*
+
+# Sandbox files
+/app/Controllers/SandboxController.php
+/app/Views/sandbox.php

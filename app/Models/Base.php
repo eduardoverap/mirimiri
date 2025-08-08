@@ -10,7 +10,8 @@ class Base
 
   protected function __construct()
   {
-    $this->conn = require DB_CONN;
+    require DB_CONN;
+    $this->conn = setConn();
   }
 
   public function getConnection(): PDO

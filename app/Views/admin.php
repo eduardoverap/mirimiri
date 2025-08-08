@@ -1,35 +1,38 @@
-  <main>
-    <section id="sec-kanji">
-      <h2>Kanji table</h2>
-      <table id="tbl-kanji">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Kanji</th>
-            <th>Joyo</th>
-            <th>JLPT</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-        </tbody>
-      </table>
-    </section>
-    <section>
-      <h2>Import Joyo & JLPT data from CSV</h2>
-      <textarea id="txt-csv-import" placeholder="Paste CSV-formatted data. Example: 一,1. Only two columns, first for 'Kanji' and second for 'Joyo' or 'JLPT', comma- or tab-separated."></textarea><br />
-      <div class="progress-bar">
-        <div id="prg-csv-import" class="current-progress"></div>
+    <section class="content-section">
+      <div class="sub-container">
+        <section id="sec-kanji">
+          <h2>Kanji table</h2>
+          <table id="tbl-kanji">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Kanji</th>
+                <th>Joyo</th>
+                <th>JLPT</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        </section>
+        <section>
+          <h2>Import Joyo & JLPT data from CSV</h2>
+          <textarea id="txt-csv-import" placeholder="Paste CSV-formatted data. Example: 一,1. Only two columns, first for 'Kanji' and second for 'Joyo' or 'JLPT', comma- or tab-separated."></textarea><br />
+          <div class="progress-bar">
+            <div id="prg-csv-import" class="current-progress"></div>
+          </div>
+          <input id="btn-csv-import" type="button" value="Import from CSV" />
+        </section>
+        <section>
+          <h2>Reset from KANJIDIC XML file</h2>
+          <textarea id="txt-xml-import-log" placeholder="Click on the button to start!" readonly></textarea><br />
+          <div class="progress-bar">
+            <div id="prg-xml-import" class="current-progress"></div>
+          </div>
+          <input id="btn-xml-import" type="button" value="Import from XML" />
+        </section>
       </div>
-      <input id="btn-csv-import" type="button" value="Import from CSV" />
-    </section>
-    <section>
-      <h2>Reset from KANJIDIC XML file</h2>
-      <textarea id="txt-xml-import-log" placeholder="Click on the button to start!" readonly></textarea><br />
-      <div class="progress-bar">
-        <div id="prg-xml-import" class="current-progress"></div>
-      </div>
-      <input id="btn-xml-import" type="button" value="Import from XML" />
     </section>
     <div id="modal">
       <div id="modal-content">
@@ -86,7 +89,6 @@
         </form>
       </div>
     </div>
-  </main>
   <script>const BASE_URL = window.location.pathname.replace('admin', '');</script>
   <script src="src/crud.js"></script>
   <script src="src/datatables-admin.js"></script>
