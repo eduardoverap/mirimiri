@@ -19,6 +19,15 @@ class Base
     return $this->conn;
   }
 
+  protected function destructureParams(array $fieldsList): array
+  {
+    $valuesList = array_map(fn($field) => ":{$field}", $fieldsList);
+    return [
+      'fields' => implode(', ', $fieldsList),
+      'values' => implode(', ', $valuesList),
+    ];
+  }
+
   public function __destruct()
   {
     $this->conn = null;

@@ -16,7 +16,7 @@
   <!-- Application styles and scripts -->
   <link rel="stylesheet" href="src/styles.css" />
   <link rel="stylesheet" href="src/modal.css" />
-  <script src="src/modal.js" defer></script>
+  <!-- script src="src/modal.js" defer></script -->
 </head>
 <body>
   <header class="title-header">
@@ -26,6 +26,7 @@
     <aside class="list-aside">
       <div>
         <a class="list-btn" title="Extract kanjis from text" href="<?= url() ?>">Kanji detector</a>
-        <a class="list-btn" title="Manage your kanji database" href="<?= url('admin') ?>">Kanji database</a>
+        <a class="list-btn" title="Manage your kanji database" href="<?= url('kanji') ?>">Kanji database</a>
+        <a class="list-btn" title="Import content from XML and CSV" href="<?= url('import') ?>">Import center</a>
       </div>
     </aside>

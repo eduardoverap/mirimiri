@@ -3,29 +3,39 @@
 namespace App\Controllers;
 
 use App\Models\Database;
+use App\Models\DTO\Kanji;
+use App\Models\DTO\Kotoba;
+use stdClass;
 
 class SaveController
 {
-  public function index()
+  private function saveKanji(stdClass $data): int|false
   {
-    $rawData = file_get_contents("php://input");
-    $data = json_decode($rawData);
-
     // Create model
     $model = new Database();
 
-    $model->updateKanji([
-      'Codepoint' => (string) $data->codepoint,
-      'Onyomi'    => (string) $data->onyomi,
-      'Kunyomi'   => (string) $data->kunyomi,
-      'Nanori'    => (string) $data->nanori,
-      'Joyo'      => (int)    $data->joyo,
-      'JLPT'      => (int)    $data->jlpt,
-      'MeaningES' => (string) $data->meaningES,
-      'MeaningQU' => (string) $data->meaningQU,
-    ]);
+    // Create kanji DTO
+    $kanji = new Kanji(
+      codepoint: (string) sanitizeInput($data->codepoint),
+      onyomi:    (string) sanitizeInput($data->onyomi),
+      kunyomi:   (string) sanitizeInput($data->kunyomi),
+      nanori:    (string) sanitizeInput($data->nanori),
+      joyo:      (int)    sanitizeInput($data->joyo),
+      jlpt:      (int)    sanitizeInput($data->jlpt),
+      meaningEs: (string) sanitizeInput($data->meaningEs),
+    );
 
-    header('Content-Type: text/plain');
-    echo $rawData;
+    return $model->updateKanji($kanji);
+  }
+
+  public function index()
+  {
+    // Get source data
+    $data = json_decode(file_get_contents("php://input"));
+
+    // Get URL parts
+    $parts = explode('/', $_GET['route']);
+
+    if ($parts[1] === 'kanji') $this->saveKanji($data);
   }
 }

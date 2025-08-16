@@ -27,6 +27,12 @@ abstract class BaseController
     include_once '../app/Views/partials/footer.php';
   }
 
+  // Verify if chat database exists
+  protected function databaseExists(string $db = DB_PATH): bool
+  {
+    return file_exists($db);
+  }
+
   // Main method for the class
   abstract public function index(): void;
 }

@@ -13,17 +13,25 @@ class SelectController
     $kanji = $model->selectKanji($codepoint);
 
     // Encode as JSON
-    return json_encode($kanji);
+    if (!is_null($kanji)) {
+      return json_encode($kanji);
+    } else {
+      return json_encode(['error' => 'Kanji not found.']);
+    }
   }
 
-  public function index()
+  public function index(): void
   {
-    if (isset($_GET['char'])) {
-      header('Content-Type: application/json');
-      echo $this->selectKanji($_GET['char']);
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+      if (isset($_GET['char'])) {
+        header('Content-Type: application/json');
+        echo $this->selectKanji($_GET['char']);
+      } else {
+        http_response_code(400);
+        echo json_encode(['error' => 'ID not provided.']);
+      }
     } else {
-      http_response_code(400);
-      echo json_encode(['error' => 'ID not provided.']);
+      goHome(404);
     }
   }
 }

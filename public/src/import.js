@@ -1,69 +1,53 @@
 // Components
-const btnXMLImport    = document.getElementById('btn-xml-import');
-const prgXMLImport    = document.getElementById('prg-xml-import');
-const txtXMLImportLog = document.getElementById('txt-xml-import-log');
-const btnCSVImport    = document.getElementById('btn-csv-import');
-const prgCSVImport    = document.getElementById('prg-csv-import');
-const txtCSVImport    = document.getElementById('txt-csv-import');
+const btnKDICImport = document.getElementById('btn-kdic-import');
+const prgKDICImport = document.getElementById('prg-kdic-import');
+const KDICImportLog = document.getElementById('kdic-import-log');
 
-/*** Parse the KANJIDIC2 XML ***/
+const btnJMDImport  = document.getElementById('btn-jmd-import');
+const prgJMDImport  = document.getElementById('prg-jmd-import');
+const JMDImportLog  = document.getElementById('jmd-import-log');
+
 let eventSource;
 
-btnXMLImport.addEventListener('click', () => {
-  btnXMLImport.disabled = true;
-  prgXMLImport.style.width = 0;
-  txtXMLImportLog.textContent = '';
-
+const importEventSource = (route, button, prgBar, logArea) => {
+  button.disabled     = true;
+  prgBar.style.width  = 0;
+  logArea.textContent = '';
+  
   if (eventSource) {
     eventSource.close();
   }
 
-  eventSource = new EventSource(BASE_URL + 'xmlimport');
+  eventSource = new EventSource(BASE_URL + 'event/' + route);
 
-  eventSource.onmessage = function(event) {
-    txtXMLImportLog.textContent += event.data + "\n";
-    txtXMLImportLog.scrollTop = txtXMLImportLog.scrollHeight;
+  eventSource.onmessage = event => {
+    logArea.textContent += event.data + "\n";
+    logArea.scrollTop    = logArea.scrollHeight;
   }
 
-  eventSource.onerror = function() {
-    txtXMLImportLog.textContent += 'Oops!\n';
+  eventSource.onerror = () => {
     eventSource.close();
-    btnXMLImport.disabled = false;
+    logArea.textContent += 'Oops!\n';
+    button.disabled      = false;
   }
 
-  eventSource.addEventListener('progress', (event) => {
-    const percent = parseInt(event.data, 10);
-    prgXMLImport.style.width = percent + '%';
+  eventSource.addEventListener('progress', event => {
+    const percent      = parseInt(event.data, 10);
+    prgBar.style.width = percent + '%';
   });
 
   eventSource.addEventListener('close', () => {
     eventSource.close();
-    btnXMLImport.disabled = false;
-    txtXMLImportLog.textContent += 'Finished.';
+    button.disabled      = false;
+    logArea.textContent += 'Finished.';
   });
+};
+
+/*** Parse the KANJIDIC2 XML ***/
+btnKDICImport.addEventListener('click', () => {
+  importEventSource('kd2', btnKDICImport, prgKDICImport, KDICImportLog);
 });
 
-/*** Parse CSV data ***/
-// Split text for analysis
-function splitCSVLinesToJSON(text) {
-  const lines = text.split('\n');
-  lines.forEach((line, i, arr) => arr[i] = line.split(/\,|\t/));
-  return JSON.stringify(lines);
-}
-
-btnCSVImport.addEventListener('click', () => {
-  fetch(BASE_URL + 'csvimport', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: splitCSVLinesToJSON(txtCSVImport.value)
-  })
-  .then(response => response.text())
-  .then(data => {
-    console.log('Response:', data);
-  })
-  .catch(error => {
-    console.error('Error:', error);
-  });
+btnJMDImport.addEventListener('click', () => {
+  importEventSource('jmd', btnJMDImport, prgJMDImport, JMDImportLog);
 });

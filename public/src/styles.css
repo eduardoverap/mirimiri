@@ -1,7 +1,12 @@
 :root {
   --black: #1a1a1a;
   --white: #fafafa;
-  --tertiary: rgb(226, 240, 255);
+  --tertiary: #db2846;
+  --tertiary-light: #ffd4db;
+  --gray-title: #e6e6e6;
+  --gray-aside: #f0f0f0;
+  --gray-scroll: #8b8b8b;
+  --gray-hover: #dadada;
 }
 
 * {
@@ -31,7 +36,7 @@ input {
   left: 0;
   right: 0;
   z-index: 1000;
-  background-color: rgb(230, 230, 230);
+  background-color: var(--gray-title);
   display: flex;
   user-select: none;
 }
@@ -54,9 +59,9 @@ input {
 .list-aside {
   width: 275px;
   overflow-y: scroll;
-  background-color: rgb(240, 240, 240);
+  background-color: var(--gray-aside);
   padding: 16px;
-  scrollbar-color: #8b8b8b rgb(240, 240, 240);
+  scrollbar-color: var(--gray-scroll) var(--gray-aside);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -80,7 +85,7 @@ a.list-btn {
 }
 
 .list-btn:hover {
-  background-color: rgb(218, 218, 218);
+  background-color: var(--gray-hover);
   cursor: pointer;
 }
 
@@ -90,10 +95,14 @@ a.list-btn {
   padding: 20px;
 }
 
-.sub-container {
+.content-centered {
   width: 100%;
   max-width: 840px;
   margin: 0 auto;
+}
+
+.content-centered a {
+  color: var(--tertiary);
 }
 
 /* Components */
@@ -173,8 +182,8 @@ fieldset select {
   overflow: auto;
 }
 
-fieldset textarea {
-  height: 5em;
+textarea {
+  height: 10em;
 }
 
 td.center-buttons {
@@ -204,13 +213,15 @@ td.center-buttons {
 }
 
 #all-kanji a {
-  color: blue;
+  color: var(--tertiary);
   text-decoration: none;
 }
 
+/* Progress bar */
+
 .progress-bar {
   width: 100%;
-  background-color: grey;
+  background-color: var(--gray-hover);
   height: 25px;
   margin-bottom: 0.5em;
 }
@@ -218,5 +229,5 @@ td.center-buttons {
 .current-progress {
   width: 0%;
   height: 25px;
-  background-color: green;
+  background-color: var(--tertiary);
 }

@@ -8,37 +8,37 @@ use PDOException;
 
 class TableController
 {
-  private Draw   $draw;
-  private array  $columns;
-  private ?array $kanjiList = null;
+  const TBL_COLUMNS = [
+    'home'  => ['Order', 'Kanji', 'Frequency', 'Readings', 'Joyo', 'JLPT', 'Meaning'],
+    'kanji' => ['KanjiID', 'Kanji', 'Joyo', 'JLPT', 'Actions'],
+  ];
 
   public function __construct(
-  ) {
-    if (isset($_GET['draw'])) {
-      $this->columns = ['KanjiID', 'Kanji', 'Joyo', 'JLPT', 'Actions'];
-      $this->draw = new Draw($this->columns);
-      $this->draw->drawCount        = (int)    $_GET['draw'];
-      $this->draw->start            = (int)    $_GET['start'];
-      $this->draw->length           = (int)    $_GET['length'];
-      $this->draw->orderColumnIndex = (int)    $_GET['order'][0]['column'] ?? 0;
-      $this->draw->orderDir         = (string) $_GET['order'][0]['dir'] ?? 'asc';
-      $this->draw->searchValue      = (string) $_GET['search']['value'] ?? null;
-    } else {
-      $data = json_decode(file_get_contents('php://input'), true);
-      $this->columns = ['Order', 'Kanji', 'Frequency', 'Readings', 'Joyo', 'JLPT', 'Meaning'];
-      $this->draw = new Draw($this->columns);
-      $this->draw->drawCount        = (int)    $data['draw'];
-      $this->draw->start            = (int)    $data['start'];
-      $this->draw->length           = (int)    $data['length'];
-      //$this->draw->orderColumnIndex = (int)    $data['order'][0]['column'] ?? 0;
-      //$this->draw->orderDir         = (string) $data['order'][0]['dir'] ?? 'asc';
-      $this->draw->searchValue      = (string) $data['search']['value'] ?? null;
+    private ?Draw $draw        = null,
+    private array $columns     = [],
+    private array $kanjiList   = [],
+    private array $moreInfo    = []
+  ) {}
 
-      $this->kanjiList = $data['kanjiList'];
+  // Create draw DTO
+  private function createDraw(array $requestData, int $drawIndex, array $columns): Draw
+  {
+    // Fill draw data
+    $draw = new Draw(columns: $columns);
+    $draw->drawCount   = $drawIndex;
+    $draw->start       = (int)    $requestData['start'];
+    $draw->length      = (int)    $requestData['length'];
+    $draw->searchValue = (string) $requestData['search']['value'] ?? null;
+    if (array_key_exists(0, $requestData['order'])) {
+      $draw->orderColumnIndex = (int)    $requestData['order'][0]['column'] ?? 0;
+      $draw->orderDir         = (string) $requestData['order'][0]['dir'] ?? 'asc';
     }
+
+    return $draw;
   }
 
-  private function ajaxAdminFetch(): array
+  // Fetch for 'admin' view
+  private function ajaxKanjiFetch(): array
   {
     try {
       $model = new Database();
@@ -52,7 +52,23 @@ class TableController
 
       // Fetch desired kanjis and render the table
       $kanjis = $model->fetchKanjis($this->draw, $filtered);
-      $data = $this->renderAdminTable($kanjis);
+      $data   = [];
+      foreach ($kanjis as $kanji) {
+        $id        = (int)    $kanji['kanji_id'];
+        $codepoint = (string) $kanji['codepoint'];
+        $joyo = $jlpt = null;
+        if (!empty($kanji['joyo'])) $joyo = (int) $kanji['joyo'];
+        if (!empty($kanji['jlpt'])) $jlpt = (int) $kanji['jlpt'];
+
+        $data[] = [
+          $id,
+          mb_chr(hexdec($codepoint)),
+          $joyo,
+          $jlpt,
+          BTN_ACTIONS
+        ];
+      }
+
       return $data;
     } catch (PDOException $e) {
       logErrorWithTimestamp($e, __FILE__);
@@ -60,88 +76,125 @@ class TableController
     }
   }
 
-  private function ajaxHomeFetchAndRender(): array
+  private function ajaxHomeFetch(): array
   {
     try {
       $model = new Database();
 
-      $data = [];
-      foreach($this->kanjiList as $kanji => $kanjiData) {
-        $codepoint = dechex(mb_ord($kanji));
-        $kanjiInfo = $model->selectKanji($codepoint);
-        $meaning   = '';
-        $readings  = [];
-        $joyo = $jlpt = null;
+      // Declare variables
+      $data = $kanjiCodepoints = $notFound = [];
+      $caseList   = '';
+      $totalKanji = 0;
+      $kanjiList  = $this->kanjiList;
+      $kanjiCount = count($kanjiList);
 
-        if (!empty($kanjiInfo->onyomi))  $readings[] = 'On\'yomi: ' . $kanjiInfo->onyomi;
-        if (!empty($kanjiInfo->kunyomi)) $readings[] = 'Kun\'yomi: ' . $kanjiInfo->kunyomi;
-        if (!empty($kanjiInfo->nanori))  $readings[] = 'Nanori: ' . $kanjiInfo->nanori;
+      // Get total filtered and unfiltered
+      $this->draw->recordsTotal = $this->draw->recordsFiltered = $kanjiCount;
 
-        if (!empty($kanjiInfo->joyo)) $joyo = (int) $kanjiInfo->joyo;
-        if (!empty($kanjiInfo->jlpt)) $jlpt = (int) $kanjiInfo->jlpt;
-
-        if (!empty($kanjiInfo->meaningENKDIC)) $meaning = $kanjiInfo->meaningENKDIC;
-
-        $data[] = [
-          $kanjiData['order'],
-          $kanji,
-          $kanjiData['count'],
-          implode('<br />', $readings),
-          $joyo,
-          $jlpt,
-          $meaning
-        ];
+      // Create placeholder for ' WHERE kanji_id IN (...)' and 'CASE WHEN ... THEN ... END' list
+      foreach ($kanjiList as $kanji => $kanjiData) {
+        $currCodepoint     = '"' . dechex(mb_ord($kanji)) . '"';
+        $kanjiCodepoints[] = $currCodepoint;
+        $caseList         .= "WHEN {$currCodepoint} THEN {$totalKanji} ";
+        $totalKanji++;
       }
+      $placeholder = implode(', ', $kanjiCodepoints);
+
+      $this->draw->orderColumn = "CASE codepoint {$caseList}END";
+
+      // Create $filtered array
+      $filtered = [
+        'count' => $kanjiCount,
+        'where' => " WHERE codepoint IN ({$placeholder})",
+        'params' => []
+      ];
+
+      // Fetch desired kanjis and render the table
+      $kanjis = $model->fetchKanjis($this->draw, $filtered);
+      $data = [];
+      foreach($kanjis as $kanji) {
+        $codepoint = (string) $kanji['codepoint'];
+        $char      = mb_chr(hexdec($codepoint));
+        if (!array_key_exists($char, $kanjiList)) {
+          $notFound[] = $char;
+        } else {
+          $meaning  = '';
+          $readings = [];
+          $joyo = $jlpt = null;
+
+          if (!empty($kanji['onyomi']))  $readings[] = 'On\'yomi: ' . $kanji['onyomi'];
+          if (!empty($kanji['kunyomi'])) $readings[] = 'Kun\'yomi: ' . $kanji['kunyomi'];
+          if (!empty($kanji['nanori']))  $readings[] = 'Nanori: ' . $kanji['nanori'];
+
+          if (!empty($kanji['joyo'])) $joyo = (int) $kanji['joyo'];
+          if (!empty($kanji['jlpt'])) $jlpt = (int) $kanji['jlpt'];
+
+          if (!empty($kanji['meaning_en_kdic'])) $meaning = $kanji['meaning_en_kdic'];
+
+          $data[] = [
+            $kanjiList[$char]['order'],
+            $char,
+            $kanjiList[$char]['count'],
+            implode('<br />', $readings),
+            $joyo,
+            $jlpt,
+            $meaning
+          ];
+        }
+      }
+
+      $this->moreInfo['notFoundCount'] = count($notFound);
+      $this->moreInfo['notFoundList']  = $notFound;
+
       return $data;
     } catch (PDOException $e) {
       logErrorWithTimestamp($e, __FILE__);
       return [];
     }
-  }
-
-  private function renderAdminTable(array $kanjis): array
-  {
-    $data = [];
-    foreach ($kanjis as $kanji) {
-      $id        = (int)    $kanji['KanjiID'];
-      $codepoint = (string) $kanji['Codepoint'];
-      $joyo = $jlpt = null;
-      if (!empty($kanji['Joyo'])) $joyo = (int) $kanji['Joyo'];
-      if (!empty($kanji['JLPT'])) $jlpt = (int) $kanji['JLPT'];
-
-      $data[] = [
-        $id,
-        mb_chr(hexdec($codepoint)),
-        $joyo,
-        $jlpt,
-        BTN_ACTIONS
-      ];
-    }
-    return $data;
   }
 
   public function index(): void
   {
     if (
-      $_SERVER['REQUEST_METHOD'] === 'GET' &&
-      isset($_GET['draw'])
-    ) {
-      $data = $this->ajaxAdminFetch();
-    } else if (
       $_SERVER['REQUEST_METHOD'] === 'POST' &&
       isset($_SERVER['HTTP_ACCEPT']) &&
       strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false
     ) {
-      $data = $this->ajaxHomeFetchAndRender();
+      // Get data from POST
+      $requestData = json_decode(file_get_contents('php://input'), true);
+
+      // Get draw index
+      $drawIndex = (int) $requestData['draw'] ?? 0;
+
+      // Get columns
+      $from    = (string) $requestData['from'];
+      $columns = $this::TBL_COLUMNS[$from];
+      
+      $this->draw     = $this->createDraw($requestData, $drawIndex, $columns);
+      switch ($from) {
+        case 'kanji':
+          $data = $this->ajaxKanjiFetch();
+          break;
+        case 'home':
+          $this->kanjiList = (array) $requestData['kanjiList'];
+          $data = $this->ajaxHomeFetch();
+          break;
+        default:
+          $data = [];
+          break;
+      }
     } else {
-      goHome();
+      goHome(404);
     }
+
     header("Content-type: application/json; charset=utf-8");
     echo json_encode([
-      "draw" => $this->draw,
-      "data" => $data,
-      "recordsTotal" => $this->draw->recordsTotal,
-      "recordsFiltered" => $this->draw->recordsFiltered
+      'draw'            => $drawIndex,
+      'data'            => $data,
+      'recordsTotal'    => $this->draw->recordsTotal,
+      'recordsFiltered' => $this->draw->recordsFiltered,
+      'moreInfo'        => $this->moreInfo
     ]);
+    exit;
   }
 }

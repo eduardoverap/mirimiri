@@ -1,5 +1,4 @@
 <?php
-
 // URL function
 if (!function_exists('url')) {
   function url(string $path = ''): string
@@ -10,10 +9,18 @@ if (!function_exists('url')) {
 
 // Redirect to homepage
 if (!function_exists('goHome')) {
-  function goHome(): void
+  function goHome(int $httpCode): void
   {
+    http_response_code($httpCode);
     header('Location: ' . BASE_URL);
     die();
+  }
+}
+
+// Sanitize input
+if (!function_exists('sanitizeInput')) {
+  function sanitizeInput(string $input): string {
+    return htmlspecialchars(stripslashes(trim($input)));
   }
 }
 
@@ -37,21 +44,34 @@ if (!function_exists('getLevelFromIndex')) {
 if (!function_exists('parseSearchValue')) {
   function parseSearchValue(string $searchValue): array
   {
+    $where = $search = '';
+
     if (preg_match(JOYO_REGEX, $searchValue, $eval)) {
       $joyoLevel = ($eval[1] === 's' || $eval[1] === 'secondary') ? 7 : $eval[1];
-      return [
-        'where'  => ' WHERE Joyo LIKE :search',
-        'search' => $joyoLevel
-      ];
+      $where  = ' WHERE joyo LIKE :search';
+      $search = $joyoLevel;
     } else if (preg_match(JLPT_REGEX, $searchValue, $eval)) {
       $jlptLevel = getLevelIndex('N' . $eval[1], JLPT_LEVEL);
-      return [
-        'where'  => ' WHERE Joyo LIKE :search',
-        'search' => $jlptLevel
-      ];
-    } else {
-      return [];
+      $where  = ' WHERE jlpt LIKE :search';
+      $search = $jlptLevel;
     }
+
+    return [
+      'where'  => $where,
+      'search' => $search
+    ];
+  }
+}
+
+// Convert from snake_case to camelCase
+if (!function_exists('snakeToCamel')) {
+  function snakeToCamel(string $snake): string {
+    $words = explode('_', $snake);
+    $camel = strtolower(array_shift($words));
+    foreach ($words as $word) {
+      $camel .= ucfirst(strtolower($word));
+    }
+    return $camel;
   }
 }
 

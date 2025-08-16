@@ -17,6 +17,17 @@ class Draw
     public int     $recordsFiltered  = 0
   )
   {
-    $this->orderColumn      = (string) $this->columns[$this->orderColumnIndex];
+    $this->orderColumn = $this->getOrderColumn();
+  }
+
+  private function getOrderColumn(): string
+  {
+    $sourceColumn = (string) $this->columns[$this->orderColumnIndex];
+    $sourceColumn = strtolower($sourceColumn);
+    if ($sourceColumn === 'kanjiid') {
+      return 'kanji_id';
+    } else {
+      return $sourceColumn;
+    }
   }
 }

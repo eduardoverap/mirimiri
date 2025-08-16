@@ -2,10 +2,10 @@
 
 namespace App\Controllers;
 
-class AdminController extends BaseController
+class KanjiController extends BaseController
 {
   public function index(): void
   {
-    $this->render('admin');
+    $this->render('kanji');
   }
 }
